@@ -8,12 +8,12 @@ const DEBUGGING_CASES = [
     title: 'Case 4: Replacing clicks.current in JSX with useState for Visible UI Data',
     brokenCode: `const clicks = useRef(0);
 const handleTrackClick = () => {
-  clicks.current += 1; // Mutating .current does NOT schedule a React render!
+  clicks.current += 1;
 };
-return <p>Clicks: {clicks.current}</p>; // Also violates rule against reading ref.current in render`,
+return <p>Clicks: {clicks.current}</p>;`,
     fixedCode: `const [clicks, setClicks] = useState(0);
 const handleTrackClick = () => {
-  setClicks((prev) => prev + 1); // Schedules a re-render so UI updates immediately
+  setClicks((prev) => prev + 1);
 };
 return <p>Clicks: {clicks}</p>;`,
     explanation:
@@ -22,14 +22,11 @@ return <p>Clicks: {clicks}</p>;`,
   {
     id: 'case-5',
     title: 'Case 5: Imperative DOM Focus Order & Tracking Previous Submitted Email via useRef',
-    brokenCode: `// BUG 1: Reading/writing ref.current during render
-previousEmailRef.current = email;
+    brokenCode: `previousEmailRef.current = email;
 
-// BUG 2: Focusing fields out of order or without checking first invalid field
 if (errors.password) passwordRef.current.focus();
 if (errors.name) nameRef.current.focus();`,
-    fixedCode: `// Inside handleSubmit(event) only:
-if (nextErrors.name) {
+    fixedCode: `if (nextErrors.name) {
   nameInputRef.current?.focus();
 } else if (nextErrors.email) {
   emailInputRef.current?.focus();
@@ -37,7 +34,6 @@ if (nextErrors.name) {
   passwordInputRef.current?.focus();
 }
 
-// When valid inside handleSubmit:
 const priorSubmittedEmail = previousEmailRef.current;
 previousEmailRef.current = trimmedEmail;
 setLastSubmission({
@@ -73,7 +69,6 @@ const validateFormValues = ({ name, email, password }) => {
 };
 
 const AccessibleForm = () => {
-  // 1. Controlled inputs via useState
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -81,16 +76,13 @@ const AccessibleForm = () => {
   const [submissionCount, setSubmissionCount] = useState(0);
   const [lastSubmission, setLastSubmission] = useState(null);
 
-  // Repaired click counter state (Debugging Case 4)
   const [visibleClicks, setVisibleClicks] = useState(0);
   const [showDebug, setShowDebug] = useState(true);
 
-  // 2. Three DOM input refs
   const nameInputRef = useRef(null);
   const emailInputRef = useRef(null);
   const passwordInputRef = useRef(null);
 
-  // 5. Track previous submitted email in a useRef without causing a render
   const previousEmailRef = useRef('None (no prior submission yet)');
 
   const handleSubmit = (event) => {
@@ -99,7 +91,6 @@ const AccessibleForm = () => {
     const nextErrors = validateFormValues({ name, email, password });
     setErrors(nextErrors);
 
-    // 4. Focus the FIRST invalid field in strict order: name -> email -> password
     if (nextErrors.name) {
       nameInputRef.current?.focus();
       return;
@@ -113,7 +104,6 @@ const AccessibleForm = () => {
       return;
     }
 
-    // Valid submission: read and update previousEmailRef strictly inside the event handler
     const priorEmailFromRef = previousEmailRef.current;
     const trimmedEmail = email.trim();
     const trimmedName = name.trim();

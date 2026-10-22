@@ -47,7 +47,6 @@ pre {
   font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
 }
 
-/* App Shell & Navbar */
 .app-shell {
   min-height: 100vh;
   display: flex;
@@ -148,7 +147,6 @@ pre {
   opacity: 0.8;
 }
 
-/* Main Workspace */
 .main-workspace {
   flex: 1;
   max-width: 1320px;
@@ -204,7 +202,6 @@ pre {
   align-items: center;
 }
 
-/* Cards & Grid */
 .exam-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
@@ -230,7 +227,6 @@ pre {
   font-size: 1rem;
 }
 
-/* Badges */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -265,7 +261,6 @@ pre {
   color: #991b1b;
 }
 
-/* Buttons & Inputs */
 .button-group {
   display: flex;
   flex-wrap: wrap;
@@ -405,7 +400,6 @@ pre {
   color: var(--text-secondary);
 }
 
-/* Exam 1 Specifics */
 .counter-display-box {
   display: flex;
   align-items: center;
@@ -479,7 +473,6 @@ pre {
   margin: 0.35rem 0 0;
 }
 
-/* Exam 2 Specifics */
 .status-strip {
   display: flex;
   justify-content: space-between;
@@ -558,7 +551,6 @@ pre {
   color: var(--primary);
 }
 
-/* Exam 3 Specifics */
 .preset-section {
   margin-top: 1.2rem;
   padding-top: 1rem;
@@ -581,7 +573,6 @@ pre {
   margin-top: 0.6rem;
 }
 
-/* Exam 4 Theme & Hierarchy */
 .dashboard-frame {
   border-radius: var(--radius-lg);
   padding: 1.25rem;
@@ -702,7 +693,6 @@ pre {
   font-size: 0.86rem;
 }
 
-/* Exam 5 Product Table */
 .controls-row-2col {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -756,7 +746,6 @@ pre {
   font-variant-numeric: tabular-nums;
 }
 
-/* Exam 6 Issue Tracker */
 .filter-bar {
   display: flex;
   justify-content: space-between;
@@ -865,7 +854,6 @@ pre {
   color: var(--text-secondary);
 }
 
-/* Debugging Evidence Panel */
 .debug-panel {
   border-top: 4px solid #0f172a;
 }
@@ -953,7 +941,6 @@ pre {
   color: var(--text-secondary);
 }
 
-/* Footer */
 .app-footer {
   text-align: center;
   padding: 1.2rem;

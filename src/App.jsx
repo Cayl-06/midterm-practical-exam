@@ -80,7 +80,6 @@ function App() {
       </header>
 
       <main className="main-workspace">
-        {/* Conditional rendering mounts ONLY the active exam so inactive exams truly unmount */}
         {activeExam === 'exam1' && <SmartTaskCounter />}
         {activeExam === 'exam2' && <LiveSearchTimer />}
         {activeExam === 'exam3' && <AccessibleForm />}

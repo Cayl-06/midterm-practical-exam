@@ -13,10 +13,9 @@ const DEBUGGING_CASES = [
     id: 'case-15',
     title: 'Case 15: Replacing Direct State/Array Mutation with Pure Immutable Copies',
     brokenCode: `case 'ADD_ISSUE':
-  // BUG: Directly mutates existing array and state object in place!
   state.issues.push({ id: state.nextId, title: action.payload.title, done: false });
   state.nextId += 1;
-  return state; // Same object reference -> React skips re-render!`,
+  return state;`,
     fixedCode: `case 'ADD_ISSUE': {
   const newIssue = {
     id: state.nextId,
@@ -35,20 +34,15 @@ const DEBUGGING_CASES = [
   {
     id: 'case-16',
     title: 'Case 16: Mismatched Action Shape (action.payload.title vs. action.title)',
-    brokenCode: `// In Component:
-dispatch({ type: 'ADD_ISSUE', title: inputTitle }); // Sent on top-level action.title
+    brokenCode: `dispatch({ type: 'ADD_ISSUE', title: inputTitle });
 
-// In Reducer:
 case 'ADD_ISSUE':
-  // BUG: Reads action.payload.title -> TypeError: Cannot read properties of undefined!
   return { ...state, issues: [...state.issues, { title: action.payload.title }] };`,
-    fixedCode: `// Standardized Flux-style action shape in Component:
-dispatch({
+    fixedCode: `dispatch({
   type: 'ADD_ISSUE',
   payload: { title: newIssueTitle }
 });
 
-// Safe read in Reducer:
 const rawTitle = action.payload?.title ?? '';`,
     explanation:
       'Every dispatch call and reducer case must agree on a strict action contract. All parameterized actions in Exam 6 follow the required { type, payload: { ... } } structure, and the reducer uses optional chaining (action.payload?.title) for defensive safety.'
@@ -60,12 +54,11 @@ const rawTitle = action.payload?.title ?? '';`,
   case 'ADD_ISSUE':
     return { ...state, ... };
   default:
-    return undefined; // BUG: Wipes out state to undefined on unknown action!
+    return undefined;
 }`,
     fixedCode: `switch (action.type) {
-  // ...all 5 action cases
   default:
-    return state; // Preserves existing state untouched
+    return state;
 }`,
     explanation:
       'If an unrecognized action type is dispatched and the default branch returns undefined (or omits a return statement), the entire reducer state becomes undefined on the next render, crashing any component reading state.issues. Returning state in the default branch safely preserves current state.'
@@ -86,12 +79,10 @@ const IssueTracker = () => {
   );
   const [showDebug, setShowDebug] = useState(true);
 
-  // Accurate counts derived directly from state.issues
   const totalCount = state.issues.length;
   const openCount = state.issues.filter((issue) => !issue.done).length;
   const doneCount = state.issues.filter((issue) => issue.done).length;
 
-  // Filtered view for All / Open / Done
   const visibleIssues = state.issues.filter((issue) => {
     if (state.filter === 'open') {
       return !issue.done;

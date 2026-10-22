@@ -4,7 +4,6 @@ const CATEGORIES = ['All', 'Electronics', 'Books', 'Stationery', 'Audio', 'Acces
 const ADJECTIVES = ['Pro', 'Ultra', 'Compact', 'Ergonomic', 'Wireless', 'Studio', 'Smart', 'Classic', 'Prime', 'Lite'];
 const NOUNS = ['Keyboard', 'Monitor', 'Notebook', 'Headphones', 'Desk Lamp', 'Webcam', 'Microphone', 'Backpack', 'Stylus', 'Dock'];
 
-// Generate 520 deterministic product records outside the component
 const GENERATED_PRODUCTS = Array.from({ length: 520 }, (_, index) => {
   const id = index + 1;
   const category = CATEGORIES[(index % (CATEGORIES.length - 1)) + 1];
@@ -31,7 +30,7 @@ const DEBUGGING_CASES = [
   return GENERATED_PRODUCTS
     .filter((p) => p.name.toLowerCase().includes(query.toLowerCase()))
     .sort((a, b) => (sortOrder === 'asc' ? a.price - b.price : b.price - a.price));
-}, [category, sortOrder]); // BUG: Missing 'query' in dependency array!`,
+}, [category, sortOrder]);`,
     fixedCode: `const visibleProducts = useMemo(() => {
   const normalizedQuery = query.trim().toLowerCase();
   return GENERATED_PRODUCTS.filter((product) => {
@@ -41,7 +40,7 @@ const DEBUGGING_CASES = [
       product.sku.toLowerCase().includes(normalizedQuery);
     return matchesCategory && matchesQuery;
   }).sort((a, b) => (sortOrder === 'asc' ? a.price - b.price : b.price - a.price));
-}, [query, category, sortOrder]); // Complete dependency array`,
+}, [query, category, sortOrder]);`,
     explanation:
       'useMemo caches its return value until one of its listed dependencies changes. When query was omitted from the dependency array, typing into the search box triggered a parent render, but useMemo returned the old cached list computed with the initial empty query.'
   },
@@ -51,9 +50,9 @@ const DEBUGGING_CASES = [
     brokenCode: `const handleSelectProduct = useCallback((product) => {
   setSelectedRecord({
     product,
-    activeProject: projectTag // BUG: Captures initial projectTag forever!
+    activeProject: projectTag
   });
-}, []); // Missing [projectTag] dependency`,
+}, []);`,
     fixedCode: `const handleSelectProduct = useCallback(
   (product) => {
     setSelectedRecord({
@@ -61,7 +60,7 @@ const DEBUGGING_CASES = [
       activeProject: projectTag
     });
   },
-  [projectTag] // Recreates callback only when projectTag changes
+  [projectTag]
 );`,
     explanation:
       'useCallback memoizes a function closure. With an empty dependency array [], handleSelectProduct stays frozen with the initial render’s projectTag value. Including [projectTag] ensures the callback stays stable during unrelated renders (like parent counter clicks) while updating whenever projectTag changes.'
@@ -71,7 +70,6 @@ const DEBUGGING_CASES = [
     title: 'Case 14: Moving Analytics Side Effect Out of useMemo and Into useEffect',
     brokenCode: `const visibleProducts = useMemo(() => {
   const result = filterAndSortProducts(query, category, sortOrder);
-  // BUG: Side effects inside useMemo violate pure rendering rules!
   console.log('[Analytics] Filter executed:', result.length);
   setAnalyticsLogCount((c) => c + 1);
   return result;
@@ -95,21 +93,17 @@ useEffect(() => {
 
 const renderMetrics = { childRenderCount: 0 };
 
-// 3. Memoized Child Component wrapped in React.memo
 const ProductList = memo(function ProductList({
   products,
   selectedProductId,
   onSelectProduct
 }) {
-  // Intentional render telemetry counter to prove React.memo prevents child renders
-  // eslint-disable-next-line react-hooks/immutability
   renderMetrics.childRenderCount += 1;
   const currentRenderCount = renderMetrics.childRenderCount;
   console.log(
     `[Exam 5] <ProductList /> rendered (Render #${currentRenderCount}) — displaying ${products.length} products.`
   );
 
-  // Show first 40 items in the scrollable viewport for clean DOM inspection while filtering all 520 items
   const previewSlice = products.slice(0, 40);
 
   return (
@@ -182,11 +176,9 @@ const ProductExplorer = () => {
   const [projectTag, setProjectTag] = useState('Q4-Campus-Lab');
   const [selectedRecord, setSelectedRecord] = useState(null);
 
-  // Unrelated parent state to test that ProductList does NOT re-render
   const [unrelatedCount, setUnrelatedCount] = useState(0);
   const [showDebug, setShowDebug] = useState(true);
 
-  // 1. Memoize filtered and sorted product list (520 records) with complete dependencies
   const visibleProducts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
@@ -204,7 +196,6 @@ const ProductExplorer = () => {
     );
   }, [query, category, sortOrder]);
 
-  // 2. Memoize item selection callback with complete dependency array [projectTag]
   const handleSelectProduct = useCallback(
     (product) => {
       setSelectedRecord({
@@ -217,12 +208,10 @@ const ProductExplorer = () => {
 
   const lastAnalyticsMessage = `Analytics synced: category="${category}", query="${query}", sort="${sortOrder}", matches=${visibleProducts.length}`;
 
-  // Case 14: Analytics logging inside useEffect (NOT inside useMemo)
   useEffect(() => {
     console.log(`[Exam 5 Analytics] ${lastAnalyticsMessage}`);
   }, [lastAnalyticsMessage]);
 
-  // Example of simple primitive calculation where useMemo is UNNECESSARY:
   const isFilterActive = query.trim() !== '' || category !== 'All' || sortOrder !== 'asc';
 
   return (
@@ -385,8 +374,7 @@ const ProductExplorer = () => {
           <div className="code-block broken">
             <span className="code-label">Unnecessary Over-Memoization</span>
             <pre>
-              <code>{`// BAD: Wrapping a trivial O(1) boolean expression in useMemo
-const isFilterActive = useMemo(() => {
+              <code>{`const isFilterActive = useMemo(() => {
   return query.trim() !== '' || category !== 'All' || sortOrder !== 'asc';
 }, [query, category, sortOrder]);`}</code>
             </pre>
@@ -394,8 +382,7 @@ const isFilterActive = useMemo(() => {
           <div className="code-block fixed">
             <span className="code-label">Clean Direct Calculation</span>
             <pre>
-              <code>{`// GOOD: Compute cheap primitives directly during render
-const isFilterActive =
+              <code>{`const isFilterActive =
   query.trim() !== '' || category !== 'All' || sortOrder !== 'asc';`}</code>
             </pre>
           </div>

@@ -7,9 +7,8 @@ const DEBUGGING_CASES = [
   {
     id: 'case-9',
     title: 'Case 9: Consumer Receiving Default Value Because No Provider Wraps the Tree',
-    brokenCode: `// Root renders Dashboard directly without PreferencesProvider:
-export default function PreferencesApp() {
-  return <Dashboard />; // Consumers only see default createContext() value or throw!
+    brokenCode: `export default function PreferencesApp() {
+  return <Dashboard />;
 }`,
     fixedCode: `export default function PreferencesApp() {
   return (
@@ -24,17 +23,13 @@ export default function PreferencesApp() {
   {
     id: 'case-10',
     title: 'Case 10: Provider and Consumer Importing Two Separately Created Context Objects',
-    brokenCode: `// In PreferencesProvider.jsx:
-const PreferencesContext = createContext(null);
+    brokenCode: `const PreferencesContext = createContext(null);
 
-// In ArticlePreview.jsx (BUG: Creates a second, unrelated Context instance!):
 const PreferencesContext = createContext(null);
 const prefs = useContext(PreferencesContext);`,
-    fixedCode: `// In PreferencesContext.jsx (Single source of truth):
-export const PreferencesContext = createContext(null);
+    fixedCode: `export const PreferencesContext = createContext(null);
 export const usePreferences = () => { ... };
 
-// In PreferencesApp.jsx / Consumers:
 import { PreferencesProvider, usePreferences } from './PreferencesContext.jsx';`,
     explanation:
       'Every call to createContext() creates a unique symbol/object identity in memory. If a consumer calls useContext() with a second createContext() instance, React cannot match it to the Provider above. Exporting a single PreferencesContext and usePreferences() Hook from PreferencesContext.jsx ensures every component references the exact same Context instance.'
@@ -42,25 +37,22 @@ import { PreferencesProvider, usePreferences } from './PreferencesContext.jsx';`
   {
     id: 'case-11',
     title: 'Case 11: Why Moving Shared State into Context Removes Intermediate Preference Props',
-    brokenCode: `// Prop drilling through intermediate layout components that do not need fontSize:
-<Dashboard theme={theme} fontSize={fontSize} setTheme={setTheme} setFontSize={setFontSize}>
+    brokenCode: `<Dashboard theme={theme} fontSize={fontSize} setTheme={setTheme} setFontSize={setFontSize}>
   <Toolbar theme={theme} fontSize={fontSize} setTheme={setTheme} setFontSize={setFontSize}>
     <PreferencesPanel theme={theme} fontSize={fontSize} ... />
   </Toolbar>
 </Dashboard>`,
     fixedCode: `<PreferencesProvider>
-  <Dashboard /> {/* Zero props passed */}
+  <Dashboard />
 </PreferencesProvider>
 
-// Inside Dashboard:
-<Toolbar />      {/* Zero props passed */}
-<ArticlePreview /> {/* Zero props passed */}`,
+<Toolbar />
+<ArticlePreview />`,
     explanation:
       'React Context broadcasts values from a Provider directly to any nested subscriber in its subtree that calls usePreferences(). Intermediate layout components like Dashboard and Toolbar no longer act as pass-through conduits for props they do not use, decoupling component signatures and simplifying maintenance.'
   }
 ];
 
-// Level 3 Child A: PreferencesPanel (inside Toolbar)
 export const PreferencesPanel = () => {
   const { theme, fontSize, toggleTheme, setTheme, setFontSize } = usePreferences();
 
@@ -122,7 +114,6 @@ export const PreferencesPanel = () => {
   );
 };
 
-// Level 2 Child A: Toolbar (receives ZERO props)
 export const Toolbar = () => {
   return (
     <div className="toolbar-container">
@@ -132,7 +123,6 @@ export const Toolbar = () => {
   );
 };
 
-// Level 2 Child B: ArticlePreview (receives ZERO props)
 export const ArticlePreview = () => {
   const { theme, fontSize } = usePreferences();
 
@@ -164,7 +154,6 @@ export const ArticlePreview = () => {
   );
 };
 
-// Level 1 Container: Dashboard (receives ZERO props)
 export const Dashboard = () => {
   const { theme, fontSize } = usePreferences();
 
@@ -188,7 +177,6 @@ export const Dashboard = () => {
   );
 };
 
-// Component intentionally rendered outside PreferencesProvider to test custom Hook guard
 const UnwrappedConsumerProbe = () => {
   const prefs = usePreferences();
   return <div>Theme: {prefs.theme}</div>;
@@ -234,7 +222,6 @@ const PreferencesApp = () => {
         </div>
       </header>
 
-      {/* Required Component Hierarchy: App -> PreferencesProvider -> Dashboard -> Toolbar -> PreferencesPanel & ArticlePreview */}
       <PreferencesProvider>
         <Dashboard />
       </PreferencesProvider>

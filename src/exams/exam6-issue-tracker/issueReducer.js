@@ -72,11 +72,9 @@ export const issueReducer = (state = INITIAL_ISSUE_STATE, action) => {
   }
 };
 
-// Requirement 6: Three automated reducer unit tests using sample states and actions
 export const runIssueReducerTests = () => {
   const results = [];
 
-  // Test 1: ADD_ISSUE adds a new issue immutably and increments nextId
   const sampleState1 = {
     issues: [{ id: 1, title: 'Configure Vite project', done: false }],
     filter: 'all',
@@ -103,7 +101,6 @@ export const runIssueReducerTests = () => {
     details: `Expected 2 issues with nextId=3 and untouched original array (length 1). Got ${nextState1.issues.length} issues, nextId=${nextState1.nextId}.`
   });
 
-  // Test 2: TOGGLE_ISSUE flips target issue's done flag without mutating original issue object
   const originalIssue = { id: 10, title: 'Fix stale closure in timer', done: false };
   const sampleState2 = {
     issues: [originalIssue, { id: 11, title: 'Add context provider', done: false }],
@@ -130,7 +127,6 @@ export const runIssueReducerTests = () => {
     details: `Original issue.done remained ${String(originalIssue.done)}; new state issue.done is ${String(toggledIssue?.done)}.`
   });
 
-  // Test 3: CLEAR_DONE removes all completed issues while preserving open issues
   const sampleState3 = {
     issues: [
       { id: 1, title: 'Open task A', done: false },

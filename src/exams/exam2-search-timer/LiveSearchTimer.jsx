@@ -12,9 +12,8 @@ const DEBUGGING_CASES = [
     id: 'case-6',
     title: 'Case 6: Infinite Render Loop in useEffect',
     brokenCode: `useEffect(() => {
-  // Filtering and setting results new array reference every run
   setFilteredUsers(USERS.filter((u) => u.name.includes(query)));
-}, [query, filteredUsers]); // BUG: Depends on filteredUsers which it updates!`,
+}, [query, filteredUsers]);`,
     fixedCode: `useEffect(() => {
   const timerId = setTimeout(() => {
     const normalized = query.trim().toLowerCase();
@@ -27,7 +26,7 @@ const DEBUGGING_CASES = [
   }, 300);
 
   return () => clearTimeout(timerId);
-}, [query]); // Only depends on query`,
+}, [query]);`,
     explanation:
       'Because Array.prototype.filter() returns a brand-new array reference every time, including filteredUsers in the dependency array of an effect that calls setFilteredUsers triggers a state update -> re-render -> effect re-run in an infinite loop. The effect should depend only on its true input (query).'
   },
@@ -36,7 +35,7 @@ const DEBUGGING_CASES = [
     title: 'Case 7: Stale Closure in setInterval Timer (Stuck at 1)',
     brokenCode: `useEffect(() => {
   const intervalId = setInterval(() => {
-    setSeconds(seconds + 1); // BUG: Captures initial seconds (0) forever!
+    setSeconds(seconds + 1);
   }, 1000);
   return () => clearInterval(intervalId);
 }, []);`,
@@ -59,12 +58,9 @@ const DEBUGGING_CASES = [
   setTimeout(() => {
     setFilteredUsers(filterUsers(query));
   }, 300);
-  // Missing return () => clearTimeout(id)
 }, [query]);`,
-    fixedCode: `// 1. Debounced search cleanup
-return () => clearTimeout(timeoutId);
+    fixedCode: `return () => clearTimeout(timeoutId);
 
-// 2. Session timer unmount cleanup
 return () => clearInterval(intervalId);`,
     explanation:
       'React runs an effect cleanup function before re-running the effect (when dependencies change) and when the component unmounts. clearTimeout cancels pending delayed searches when the user types another character within 300ms (preventing outdated results and wasted updates). clearInterval stops the 1-second timer when the user navigates to another exam tab so background intervals never leak or duplicate.'
@@ -79,7 +75,6 @@ const LiveSearchTimer = () => {
   const [cleanupCount, setCleanupCount] = useState(0);
   const [showDebug, setShowDebug] = useState(true);
 
-  // 1 & 2. Delayed filter effect (300ms debounce) + clearTimeout cleanup
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       const normalized = query.trim().toLowerCase();
@@ -97,7 +92,6 @@ const LiveSearchTimer = () => {
     };
   }, [query]);
 
-  // 3 & 4. 1-second session timer with functional update + clearInterval on unmount
   useEffect(() => {
     const intervalId = setInterval(() => {
       setSeconds((prev) => prev + 1);
@@ -109,7 +103,6 @@ const LiveSearchTimer = () => {
     };
   }, []);
 
-  // 5. Synchronize document.title with the number of visible results
   useEffect(() => {
     const previousTitle = document.title;
     document.title = `(${filteredUsers.length}) Users Found | Exam 2 Live Search`;

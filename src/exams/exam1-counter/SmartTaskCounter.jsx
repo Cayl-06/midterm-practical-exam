@@ -20,7 +20,7 @@ const DEBUGGING_CASES = [
     title: 'Case 2: Redundant Status State vs. Derived State',
     brokenCode: `const [count, setCount] = useState(0);
 const [target, setTarget] = useState(5);
-const [status, setStatus] = useState('Not started'); // Redundant state falls out of sync when target changes!`,
+const [status, setStatus] = useState('Not started');`,
     fixedCode: `const [count, setCount] = useState(0);
 const [target, setTarget] = useState(5);
 
@@ -36,8 +36,8 @@ const status =
   {
     id: 'case-3',
     title: 'Case 3: Unchecked Lower & Upper State Boundaries',
-    brokenCode: `const decrement = () => setCount(count - 1); // Allows negative count!
-<button onClick={increment}>Increment</button> // Not disabled when count >= target`,
+    brokenCode: `const decrement = () => setCount(count - 1);
+<button onClick={increment}>Increment</button>`,
     fixedCode: `const decrement = () => {
   setCount((prev) => (prev > 0 ? prev - 1 : 0));
 };
@@ -59,7 +59,6 @@ const SmartTaskCounter = () => {
     'Ready. Use the controls or validation preset buttons below.'
   );
 
-  // Derived status directly from state (no separate status useState)
   const status =
     count === 0
       ? 'Not started'
@@ -94,13 +93,11 @@ const SmartTaskCounter = () => {
     setCount(0);
   };
 
-  // Two queued functional updates as required by Exam 1
   const handleAddTwo = () => {
     setCount((prev) => (capAtTarget ? (prev < target ? prev + 1 : prev) : prev + 1));
     setCount((prev) => (capAtTarget ? (prev < target ? prev + 1 : prev) : prev + 1));
   };
 
-  // Validation Case Helpers
   const applyPresetCase1 = () => {
     setTarget(5);
     setCount(0);
